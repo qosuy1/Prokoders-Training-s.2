@@ -33,10 +33,14 @@ class CommentController extends Controller
         $validated = $request->validate([
             'body' => "required|text",
         ]);
-        $validated['post_id'] = $post->id;
-        $validated['user_id'] = $request->user()->id();
+        $user = $request->user();
+        $comment = $user->comments()->create(
+            [
+                'post_id' => $post->id,
+                'body' => $validated['body']
+            ]
+        );
 
-        $comment = Comment::create($validated);
         return ApiResponse::success(
             $comment,
             'comment created successfully',
@@ -55,7 +59,6 @@ class CommentController extends Controller
         $validated = $request->validate([
             'body' => "required|text",
         ]);
-        $validated['user_id'] = $request->user()->id();
 
         $comment->update($validated);
         return ApiResponse::success(
@@ -69,7 +72,7 @@ class CommentController extends Controller
      */
     public function destroy(Post $post, Comment $comment)
     {
-        $this->authorize('delete', $comment);
+        $this->authorize('delete',$post, $comment);
 
         $comment->delete();
 

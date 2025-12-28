@@ -5,101 +5,127 @@ namespace App\Http\Controllers\V1;
 use App\Helper\V1\ApiResponse;
 use App\Models\Post;
 use App\Http\Controllers\Controller;
-use App\Http\Middleware\IsTheUserAuthor;
 use App\Http\Requests\v1\Posts\CreatePostsRequest;
 use App\Http\Requests\v1\Posts\updatePostsRequest;
+use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
+    /**
+     * Constructor to set up middleware
+     */
     public function __construct()
     {
-        $this->middleware(['auth:sanctum'])
-            ->only(['store', 'update']);
+        $this->middleware('auth:sanctum')->only(['store', 'update', 'destroy', 'publish']);
     }
+
     /**
-     * Display a listing of the resource.
+     * Display a paginated listing of all published posts with comments.
      */
     public function index()
     {
-        return ApiResponse::success(
-            Post::get(),
-        );
+        $posts = Post::with('comments')
+            ->where('published_at', '!=', null)
+            ->latest('published_at')
+            ->paginate(15);
+
+        return ApiResponse::success($posts, 'Posts retrieved successfully');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created post in storage.
      */
     public function store(CreatePostsRequest $request)
     {
-        $request->user()->authorize('create');
+        // Check if user has permission to create posts
+        $this->authorize('create', Post::class);
+
+        // Verify user has author record
+        if (!$request->user()->author) {
+            return ApiResponse::forbidden('You must be an author to create posts.');
+        }
 
         $validated = $request->validated();
         $validated['author_id'] = $request->user()->author->id;
+        $validated['user_id'] = $request->user()->id;
+
         $post = Post::create($validated);
+
         return ApiResponse::success(
-            $post,
-            code: 201
+            $post->load('comments'),
+            'Post created successfully',
+            201
         );
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified post with its comments.
      */
     public function show(Post $post)
     {
-        if (request()->user()->cannot('view', $post))
-            return ApiResponse::forbidden();
+        // Check authorization using policy
+        $this->authorize('view', $post);
 
-        return ApiResponse::success(
-            $post,
-        );
+        $post = $post->load([
+            'comments' => function ($query) {
+                $query->latest()->paginate(10);
+            }
+        ]);
+
+        return ApiResponse::success($post, 'Post retrieved successfully');
     }
 
-
     /**
-     * Update the specified resource in storage.
+     * Update the specified post in storage.
      */
     public function update(updatePostsRequest $request, Post $post)
     {
-        if ($request->user()->cannot('update', $post))
-            return ApiResponse::forbidden();
-        // or
-        // $this->authorize('update' , $post);
+        // Check authorization using policy
+        $this->authorize('update', $post);
 
         $validated = $request->validated();
-        $post = Post::update($validated);
+        $post->update($validated);
+
         return ApiResponse::success(
-            $post,
-            'post updated successfully'
+            $post->fresh(),
+            'Post updated successfully'
         );
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified post and its comments from storage.
      */
-    public function destroy(Post $post)
+    public function destroy(Request $request, Post $post)
     {
-        if (request()->user()->cannot('delete', $post))
-            return ApiResponse::forbidden();
+        // Check authorization using policy
+        $this->authorize('delete', $post);
 
+        // Delete all associated comments
+        $post->comments()->delete();
+
+        // Delete the post
         $post->delete();
-        return ApiResponse::success(
-            [],
-            'post deleted successfully'
-        );
+
+        return ApiResponse::success([], 'Post deleted successfully');
     }
 
-    public function publish(Post $post)
+    /**
+     * Publish a post by setting published_at timestamp.
+     */
+    public function publish(Request $request, Post $post)
     {
+        // Check authorization using policy
         $this->authorize('publish', $post);
 
+        // Prevent republishing
+        if ($post->published_at) {
+            return ApiResponse::validationError(['This post is already published.']);
+        }
+
         $post->update([
-            'status' => 'published',
             'published_at' => now(),
         ]);
 
-        return response()->json([
-            'message' => 'Post published'
-        ]);
+        return ApiResponse::success($post->fresh(), 'Post published successfully');
     }
 }
