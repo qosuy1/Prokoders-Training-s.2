@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers\V1;
+use App\Http\Resources\PostResource;
 use App\Models\Post;
 
 
@@ -8,6 +9,7 @@ use App\Models\Comment;
 use Illuminate\Http\Request;
 use App\Helper\V1\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CommentResource;
 
 class CommentController extends Controller
 {
@@ -16,7 +18,7 @@ class CommentController extends Controller
     {
         $comments = $post->comments;
         return ApiResponse::success(
-            $comments,
+            CommentResource::collection($comments),
             'all post comments'
         );
     }
@@ -42,7 +44,7 @@ class CommentController extends Controller
         );
 
         return ApiResponse::success(
-            $comment,
+            new CommentResource($comment),
             'comment created successfully',
             201
         );
@@ -62,7 +64,7 @@ class CommentController extends Controller
 
         $comment->update($validated);
         return ApiResponse::success(
-            $comment,
+            new CommentResource($comment),
             'Comment updated successfully'
         );
     }

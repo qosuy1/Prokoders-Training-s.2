@@ -6,6 +6,7 @@ use App\Enums\UserTypeEnum;
 use App\Helper\V1\ApiResponse;
 use App\Http\Requests\V1\Auth\LoginRequest;
 use App\Http\Requests\V1\Auth\RegisterRequest;
+use App\Http\Resources\UserResource;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -24,14 +25,15 @@ class AuthController extends Controller
         $user = User::create($request->validated());
         $user->syncRoles(UserTypeEnum::User->value);
 
-        $response = [
-            'token' => $user->createToken("access-token")->plainTextToken,
-            'name' => $user->name,
-            'email' => $user->email,
-            'user_role' => $user->getRoleNames()->first(),
-        ];
-
-        return ApiResponse::success($response, 'User registered successfully', 201);
+        return ApiResponse::success(
+            [
+                new UserResource($user),
+                'token' => $user->createToken("access-token")->plainTextToken,
+            ]
+            ,
+            'User registered successfully',
+            201
+        );
     }
 
     /**
@@ -44,14 +46,16 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        $response = [
-            'token' => $user->createToken("access-token")->plainTextToken,
-            'name' => $user->name,
-            'email' => $user->email,
-            'user_role' => $user->getRoleNames()->first(),
-        ];
 
-        return ApiResponse::success($response, "User logged in successfully", 200);
+        return ApiResponse::success(
+            [
+                new UserResource($user),
+                'token' => $user->createToken("access-token")->plainTextToken,
+
+            ],
+            "User logged in successfully",
+            200
+        );
     }
 
     /**
@@ -70,8 +74,8 @@ class AuthController extends Controller
     {
         $user = $request->user();
         return ApiResponse::success([
-            'user' => $user,
-            'user_role' => $user->getRoleNames()->first(),
+            new UserResource($user),
+            // 'user_role' => $user->getRoleNames()->first(),
         ], 'User profile retrieved successfully', 200);
     }
 }

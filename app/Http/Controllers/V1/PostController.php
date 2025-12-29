@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V1;
 
 use App\Helper\V1\ApiResponse;
+use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\v1\Posts\CreatePostsRequest;
@@ -29,7 +30,7 @@ class PostController extends Controller
             ->latest('published_at')
             ->paginate(15);
 
-        return ApiResponse::success($posts, 'Posts retrieved successfully');
+        return ApiResponse::success(PostResource::collection($posts), 'Posts retrieved successfully');
     }
 
     /**
@@ -52,7 +53,7 @@ class PostController extends Controller
         $post = Post::create($validated);
 
         return ApiResponse::success(
-            $post->load('comments'),
+            new PostResource($post),
             'Post created successfully',
             201
         );
@@ -72,7 +73,7 @@ class PostController extends Controller
             }
         ]);
 
-        return ApiResponse::success($post, 'Post retrieved successfully');
+        return ApiResponse::success(new PostResource($post), 'Post retrieved successfully');
     }
 
     /**
@@ -87,7 +88,7 @@ class PostController extends Controller
         $post->update($validated);
 
         return ApiResponse::success(
-            $post->fresh(),
+            new PostResource($post->fresh()),
             'Post updated successfully'
         );
     }
@@ -126,6 +127,6 @@ class PostController extends Controller
             'published_at' => now(),
         ]);
 
-        return ApiResponse::success($post->fresh(), 'Post published successfully');
+        return ApiResponse::success(new PostResource($post->fresh()), 'Post published successfully');
     }
 }

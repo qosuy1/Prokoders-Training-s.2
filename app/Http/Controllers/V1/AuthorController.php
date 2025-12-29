@@ -8,6 +8,7 @@ use App\Helper\V1\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\Authors\StoreAuthorRequest;
 use App\Http\Requests\V1\Authors\UpdateAuthorRequest;
+use App\Http\Resources\AuthorResource;
 use App\Services\V1\AuthorService;
 use Illuminate\Auth\Access\AuthorizationException;
 // use Illuminate\Routing\Controller as RoutingController;
@@ -28,7 +29,7 @@ class AuthorController extends Controller
     public function index()
     {
         return ApiResponse::success(
-            Author::get(),
+            AuthorResource::collection(Author::all()),
         );
     }
 
@@ -42,7 +43,7 @@ class AuthorController extends Controller
 
             $author = $this->authorService->createAuthor($request->user(), $request->validated());
 
-            return ApiResponse::created($author, 'Author created successfully');
+            return ApiResponse::created(new AuthorResource($author), 'Author created successfully');
 
         } catch (AuthorizationException $e) {
             return ApiResponse::forbidden($e->getMessage());
@@ -59,7 +60,7 @@ class AuthorController extends Controller
     public function show(Author $author)
     {
         return ApiResponse::success(
-            $author,
+            new AuthorResource($author),
             'Author retrieved successfully'
         );
     }
@@ -74,7 +75,7 @@ class AuthorController extends Controller
 
             $updatedAuthor = $this->authorService->updateAuthor($author, $request->validated());
             return ApiResponse::success(
-                $updatedAuthor,
+                new AuthorResource($updatedAuthor),
                 'Author updated successfully'
             );
         } catch (AuthorizationException $e) {

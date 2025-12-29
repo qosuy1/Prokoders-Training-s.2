@@ -7,6 +7,8 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Helper\V1\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CategoryResource;
+
 // use Illuminate\Routing\Controller as RoutingController;
 
 class CategoryController extends Controller
@@ -14,7 +16,7 @@ class CategoryController extends Controller
     public function __construct()
     {
         $this->middleware(["role:admin,editor", "auth:sanctum"])
-            ->except('index');
+            ->except('index', 'show');
     }
     /**
      * Display a listing of the resource.
@@ -22,10 +24,23 @@ class CategoryController extends Controller
     public function index()
     {
         return ApiResponse::success(
-            Category::get(),
+            CategoryResource::collection(Category::get()),
         );
     }
 
+    public function show(Category $category)
+    {
+        $category = $category->with([
+            'posts' => function ($query) {
+                $query->latest()->paginate();
+            }
+        ]);
+
+        return ApiResponse::success(
+            new CategoryResource($category),
+            'category retrived successfully'
+        );
+    }
 
 
     /**
@@ -40,7 +55,7 @@ class CategoryController extends Controller
 
         $category = Category::create($validated);
         return ApiResponse::success(
-            $category,
+            new CategoryResource($category),
             code: 201
         );
     }
@@ -57,7 +72,7 @@ class CategoryController extends Controller
 
         $category = Category::update($validated);
         return ApiResponse::success(
-            $category,
+            new CategoryResource($category),
             'category updated',
             code: 201
         );
