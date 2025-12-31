@@ -27,7 +27,7 @@ Route::prefix('v1')
         Route::post('posts/{post}/publishPost', [PostController::class, 'publish']);
 
         // categories
-        Route::apiResource('categories', CategoryController::class)->except('show');
+        Route::apiResource('categories', CategoryController::class);
 
         // comments
         Route::get('/posts/{post}/comments', [CommentController::class, 'postComments']);

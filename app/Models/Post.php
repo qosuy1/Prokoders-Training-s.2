@@ -2,12 +2,10 @@
 
 namespace App\Models;
 
-use Dom\Comment;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
-    //
     public $fillable = [
         'author_id',
         'title',
@@ -15,22 +13,35 @@ class Post extends Model
         'published_at'
     ];
 
-    // Relations
-    public function category(){
-        $this->belongsToMany(Category::class );
+    /**
+     * Get the categories for this post.
+     */
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'post_category', 'post_id', 'category_id');
     }
 
-    public function author(){
-        $this->belongsTo(Author::class);
+    /**
+     * Get the author of this post.
+     */
+    public function author()
+    {
+        return $this->belongsTo(Author::class);
     }
 
-    public function comments(){
-        $this->hasMany(Comment::class);
+    /**
+     * Get the comments for this post.
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
     }
 
-    // Accessors
-    public function getPublishedAttribute(){
-        $this->published_at != null ;
+    /**
+     * Check if the post is published.
+     */
+    public function getPublishedAttribute()
+    {
+        return $this->published_at != null;
     }
-    
 }

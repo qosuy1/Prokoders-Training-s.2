@@ -2,88 +2,104 @@
 
 namespace App\Http\Controllers\V1;
 
-use App\Enums\UserTypeEnum;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Helper\V1\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CategoryResource;
-
-// use Illuminate\Routing\Controller as RoutingController;
+use App\Http\Requests\V1\Categories\StoreCategoryRequest;
+use App\Http\Requests\V1\Categories\UpdateCategoryRequest;
 
 class CategoryController extends Controller
 {
+    /**
+     * Constructor to set up middleware.
+     * Authentication and authorization required for create, update, destroy.
+     * Index and show are publicly accessible.
+     */
     public function __construct()
     {
-        $this->middleware(["role:admin,editor", "auth:sanctum"])
-            ->except('index', 'show');
+        $this->middleware('auth:sanctum')->only(['store', 'update', 'destroy']);
     }
+
     /**
-     * Display a listing of the resource.
+     * Display a listing of all categories.
      */
     public function index()
     {
+        $categories = Category::all();
+
         return ApiResponse::success(
-            CategoryResource::collection(Category::get()),
+            CategoryResource::collection($categories),
+            'Categories retrieved successfully'
         );
     }
 
+    /**
+     * Display the specified category with its posts.
+     */
     public function show(Category $category)
     {
-        $category = $category->with([
+        $category->load([
             'posts' => function ($query) {
-                $query->latest()->paginate();
+                $query->where('published_at', '!=', null)
+                    ->latest('published_at')
+                    ->paginate(10);
             }
         ]);
 
         return ApiResponse::success(
             new CategoryResource($category),
-            'category retrived successfully'
+            'Category retrieved successfully'
         );
     }
 
-
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created category in storage.
+     * Authorization is handled by StoreCategoryRequest.
      */
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
-        $validated = $request->validate([
-            'name' => "required|string",
-            'email' => "required|email"
-        ]);
+        $category = Category::create($request->validated());
 
-        $category = Category::create($validated);
         return ApiResponse::success(
             new CategoryResource($category),
-            code: 201
+            'Category created successfully',
+            201
         );
     }
 
-
     /**
-     * Update the specified resource in storage.
+     * Update the specified category in storage.
+     * Authorization is handled by UpdateCategoryRequest.
      */
-    public function update(Request $request, Category $category)
+    public function update(UpdateCategoryRequest $request, Category $category)
     {
-        $validated = $request->validate([
-            'name' => "string"
-        ]);
+        $category->update($request->validated());
 
-        $category = Category::update($validated);
         return ApiResponse::success(
-            new CategoryResource($category),
-            'category updated',
-            code: 201
+            new CategoryResource($category->fresh()),
+            'Category updated successfully',
+            200
         );
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified category from storage.
      */
-    public function destroy(Category $category)
+    public function destroy(Request $request, Category $category)
     {
+        // Check if user is admin or editor
+        if (!$request->user()->hasRole(['admin', 'editor'])) {
+            return ApiResponse::forbidden('You are not authorized to delete categories.');
+        }
+
         $category->delete();
-        return ApiResponse::success(null, 'category deleted', 200);
+
+        return ApiResponse::success(
+            [],
+            'Category deleted successfully',
+            200
+        );
     }
 }

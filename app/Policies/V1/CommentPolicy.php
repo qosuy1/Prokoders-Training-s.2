@@ -17,7 +17,8 @@ class CommentPolicy
 
     public function create(User $user)
     {
-        return true;
+        if ($user != null)
+            return true;
     }
 
     public function update(User $user, Comment $comment)

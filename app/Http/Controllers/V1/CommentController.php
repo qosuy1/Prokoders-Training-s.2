@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Http\Controllers\V1;
-use App\Http\Resources\PostResource;
 use App\Models\Post;
 
 
@@ -31,17 +30,12 @@ class CommentController extends Controller
     public function store(Request $request, Post $post)
     {
         $this->authorize('create', Comment::class);
-
         $validated = $request->validate([
-            'body' => "required|text",
+            'body' => "required|string",
         ]);
         $user = $request->user();
-        $comment = $user->comments()->create(
-            [
-                'post_id' => $post->id,
-                'body' => $validated['body']
-            ]
-        );
+        $validated['post_id'] = $post->id;
+        $comment = $user->comments()->create($validated);
 
         return ApiResponse::success(
             new CommentResource($comment),
@@ -59,7 +53,7 @@ class CommentController extends Controller
         $this->authorize('update', $comment);
 
         $validated = $request->validate([
-            'body' => "required|text",
+            'body' => "required|string",
         ]);
 
         $comment->update($validated);
@@ -74,7 +68,7 @@ class CommentController extends Controller
      */
     public function destroy(Post $post, Comment $comment)
     {
-        $this->authorize('delete',$post, $comment);
+        $this->authorize('delete', [$post, $comment]);
 
         $comment->delete();
 

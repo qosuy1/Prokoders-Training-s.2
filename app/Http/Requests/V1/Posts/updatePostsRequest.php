@@ -24,7 +24,8 @@ class updatePostsRequest extends FormRequest
         return [
             'title' => 'max:255|string',
             'body' => "string",
-            'author_id' => "exists:authors,id"
+            'author_id' => "exists:authors,id",
+            "categories_id" => "sometimes|nullable|array"
         ];
     }
 }

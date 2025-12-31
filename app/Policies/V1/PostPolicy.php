@@ -12,14 +12,21 @@ class PostPolicy
     /**
      * Intercept all authorization checks.
      * Admins have access to all actions.
+     * Note: This method is only called for authenticated users.
+     * For unauthenticated users, the specific policy methods handle authorization.
      */
     public function before(User $user, $ability): ?bool
     {
-        $role = $user->roles->first()->name ?? UserTypeEnum::User->value;
+        // Check if user is admin
+        // Use null-safe operator to handle cases where roles might not be loaded
+        $firstRole = $user->roles->first();
+        $role = $firstRole?->name ?? UserTypeEnum::User->value;
+
         if ($role === UserTypeEnum::Admin->value) {
             return true;
         }
-        return null;
+
+        return null; // Allow specific policy methods to handle authorization
     }
 
     /**
@@ -44,6 +51,15 @@ class PostPolicy
 
         // Unpublished posts can only be viewed by the author
         if ($user === null) {
+            return false;
+        }
+
+        // Load author relationship if not already loaded
+        if (!$user->relationLoaded('author')) {
+            $user->load('author');
+        }
+
+        if (!$user->author) {
             return false;
         }
 
@@ -72,7 +88,7 @@ class PostPolicy
         }
 
         // Authors can only update their own posts
-        if ($user->author() && $post->author_id === $user->author->id) {
+        if ($user->author && $post->author_id === $user->author->id) {
             return true;
         }
 
@@ -92,7 +108,7 @@ class PostPolicy
         }
 
         // Authors can only delete their own posts
-        if ($user->author() && $post->author_id === $user->author->id) {
+        if ($user->author && $post->author_id === $user->author->id) {
             return true;
         }
 

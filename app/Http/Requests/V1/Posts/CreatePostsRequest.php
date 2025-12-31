@@ -24,7 +24,8 @@ class CreatePostsRequest extends FormRequest
         return [
             'title' => 'required|max:255|string',
             'body' => "required|string",
-            'author_id' => "required|exists:authors,id"
+            // 'author_id' => "sometimes|nullable|exists:authors,id",
+            'categories_id' => "required|array"
         ];
     }
 }
