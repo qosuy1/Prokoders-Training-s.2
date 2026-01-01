@@ -57,8 +57,12 @@ class AuthorController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Author $author)
+    public function show($authorId)
     {
+        $author = Author::find($authorId);
+        if (!$author)
+            return ApiResponse::notFound('author not found.');
+
         return ApiResponse::success(
             new AuthorResource($author),
             'Author retrieved successfully'
@@ -68,8 +72,12 @@ class AuthorController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateAuthorRequest $request, Author $author)
+    public function update(UpdateAuthorRequest $request, $authorId)
     {
+        $author = Author::find($authorId);
+        // dd($author);
+        if (!$author)
+            return ApiResponse::notFound('author not found.');
         try {
             $this->authorize('update', $author);
 
@@ -88,8 +96,12 @@ class AuthorController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Author $author)
+    public function destroy($authorId)
     {
+        $author = Author::find($authorId);
+        if (!$author)
+            return ApiResponse::notFound('author not found.');
+
         try {
             $this->authorize('delete', $author);
 

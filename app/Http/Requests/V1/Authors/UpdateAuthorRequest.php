@@ -23,7 +23,9 @@ class UpdateAuthorRequest extends FormRequest
     {
         return [
             'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|email|unique:authors,email,' . $this->route('author')?->id,
+            'email' => 'sometimes|required|email|unique:authors,email',
+
+            // 'email' => 'sometimes|required|email|unique:authors,email,' . $this->route('author')?->id,
         ];
     }
 }

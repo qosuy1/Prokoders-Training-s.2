@@ -24,16 +24,16 @@ Route::prefix('v1')
 
         // posts
         Route::apiResource('posts', PostController::class);
-        Route::post('posts/{post}/publishPost', [PostController::class, 'publish']);
+        Route::post('posts/{postId}/publishPost', [PostController::class, 'publish']);
 
         // categories
         Route::apiResource('categories', CategoryController::class);
 
         // comments
-        Route::get('/posts/{post}/comments', [CommentController::class, 'postComments']);
-        Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->middleware('auth:sanctum');
-        Route::put('/posts/{post}/comments/{comment}', [CommentController::class, 'update'])->middleware('auth:sanctum');
-        Route::delete('/posts/{post}/comments/{comment}', [CommentController::class, 'destroy'])->middleware('auth:sanctum');
+        Route::get('/posts/{postId}/comments', [CommentController::class, 'postComments']);
+        Route::post('/posts/{postId}/comments', [CommentController::class, 'store'])->middleware('auth:sanctum');
+        Route::put('/posts/{postId}/comments/{commentId}', [CommentController::class, 'update'])->middleware('auth:sanctum');
+        Route::delete('/posts/{postId}/comments/{commentId}', [CommentController::class, 'destroy'])->middleware('auth:sanctum');
 
         // Author
         Route::apiResource('author', AuthorController::class)->middleware('auth:sanctum');

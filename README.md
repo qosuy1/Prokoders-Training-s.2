@@ -2,6 +2,12 @@
 
 A comprehensive Laravel API application for managing Authors, Posts, Categories, and Comments with complete authorization and validation.
 
+### 📚 API Documentation
+
+For complete API documentation with all endpoints, request/response examples, and testing capabilities, visit:
+
+**Postman Documentation:** [https://documenter.getpostman.com/view/45618842/2sBXVckCMv](https://documenter.getpostman.com/view/45618842/2sBXVckCMv)
+
 ## 🚀 Features Implemented
 
 ### 1. **Author Management**

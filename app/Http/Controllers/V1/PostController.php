@@ -78,8 +78,13 @@ class PostController extends Controller
     /**
      * Display the specified post with its comments.
      */
-    public function show(Request $request, Post $post)
+    public function show(Request $request, $postId)
     {
+        $post = Post::find($postId);
+        if (!$post) {
+            return ApiResponse::notFound('Post not found.');
+        }
+
         // Try to authenticate user from Bearer token (even without middleware)
         $user = Auth::guard('sanctum')->user();
 
@@ -104,8 +109,13 @@ class PostController extends Controller
     /**
      * Update the specified post in storage.
      */
-    public function update(updatePostsRequest $request, Post $post)
+    public function update(updatePostsRequest $request, $postId)
     {
+        $post = Post::find($postId);
+        if (!$post) {
+            return ApiResponse::notFound('Post not found.');
+        }
+
         // Check authorization using policy
         $this->authorize('update', $post);
 
@@ -124,14 +134,19 @@ class PostController extends Controller
     /**
      * Remove the specified post and its comments from storage.
      */
-    public function destroy(Request $request, Post $post)
+    public function destroy(Request $request, $postId)
     {
+        $post = Post::find($postId);
+
+        if (!$post) {
+            return ApiResponse::notFound('Post not found.');
+        }
         // Check authorization using policy
         $this->authorize('delete', $post);
 
         // Delete all associated comments
         $post->comments()->delete();
-        $post->categories()->detach(); //Detach models from the relationship. 
+        $post->categories()->detach(); //Detach models from the relationship.
 
         // Delete the post
         $post->delete();
@@ -142,8 +157,13 @@ class PostController extends Controller
     /**
      * Publish a post by setting published_at timestamp.
      */
-    public function publish(Request $request, Post $post)
+    public function publish(Request $request, $postId)
     {
+        $post = Post::find($postId);
+
+        if (!$post) {
+            return ApiResponse::notFound('Post not found.');
+        }
         // Check authorization using policy
         $this->authorize('publish', $post);
 

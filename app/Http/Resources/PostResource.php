@@ -21,7 +21,17 @@ class PostResource extends JsonResource
             'body' => $this->body,
             'published_at' => isset($this->published_at) ? Carbon::parse($this->published_at)->format('d-m-y , H:i') : null,
             'created_at' => $this->created_at->format('d-m-y , H:i'),
-            'author' => new AuthorResource($this->author),
+            'updated_at' => $this->when(
+                Carbon::parse($this->created_at) != Carbon::parse($this->updated_at),
+                function () {
+                    return $this->updated_at->format('d-m-y , H:i');
+                }
+            ),
+            'author' => [
+                'id' => $this->author->id,
+                'name' => $this->author->name,
+                'email' => $this->author->email,
+            ],
             'comments' => $this->whenLoaded('comments', function () {
                 return CommentResource::collection($this->comments);
             })

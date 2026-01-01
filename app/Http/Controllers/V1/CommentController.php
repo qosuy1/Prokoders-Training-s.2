@@ -13,8 +13,13 @@ use App\Http\Resources\CommentResource;
 class CommentController extends Controller
 {
 
-    public function postComments(Post $post)
+    public function postComments($postId)
     {
+        $post = Post::find($postId);
+        if (!$post) {
+            return ApiResponse::notFound('Post not found.');
+        }
+
         $comments = $post->comments;
         return ApiResponse::success(
             CommentResource::collection($comments),
@@ -27,8 +32,13 @@ class CommentController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request, Post $post)
+    public function store(Request $request, Post $postId)
     {
+        $post = Post::find($postId);
+        if (!$post) {
+            return ApiResponse::notFound('Post not found.');
+        }
+
         $this->authorize('create', Comment::class);
         $validated = $request->validate([
             'body' => "required|string",
@@ -48,10 +58,18 @@ class CommentController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Comment $comment)
+    public function update(Request $request, $postId, $commentId)
     {
+        $post = Post::find($postId);
+        $comment = Comment::find($commentId);
+        if (!$post)
+            return ApiResponse::notFound('Post not found.');
+        elseif (!$comment)
+            return ApiResponse::notFound('Comment not found.');
+
         $this->authorize('update', $comment);
 
+        $comment = Comment::findOrFail($comment->id);
         $validated = $request->validate([
             'body' => "required|string",
         ]);
@@ -66,8 +84,15 @@ class CommentController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Post $post, Comment $comment)
+    public function destroy($postId, $commentId)
     {
+        $post = Post::find($postId);
+        $comment = Comment::find($commentId);
+        if (!$post)
+            return ApiResponse::notFound('Post not found.');
+        elseif (!$comment)
+            return ApiResponse::notFound('Comment not found.');
+
         $this->authorize('delete', [$post, $comment]);
 
         $comment->delete();

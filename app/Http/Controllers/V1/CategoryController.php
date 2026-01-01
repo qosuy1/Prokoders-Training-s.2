@@ -38,8 +38,12 @@ class CategoryController extends Controller
     /**
      * Display the specified category with its posts.
      */
-    public function show(Category $category)
+    public function show($categoryId)
     {
+        $category = Category::find($categoryId);
+        if (!$category)
+            return ApiResponse::notFound('category not found.');
+
         $category->load([
             'posts' => function ($query) {
                 $query->where('published_at', '!=', null)
@@ -73,8 +77,12 @@ class CategoryController extends Controller
      * Update the specified category in storage.
      * Authorization is handled by UpdateCategoryRequest.
      */
-    public function update(UpdateCategoryRequest $request, Category $category)
+    public function update(UpdateCategoryRequest $request, $categoryId)
     {
+        $category = Category::find($categoryId);
+        if (!$category)
+            return ApiResponse::notFound('category not found.');
+
         $category->update($request->validated());
 
         return ApiResponse::success(
@@ -87,8 +95,12 @@ class CategoryController extends Controller
     /**
      * Remove the specified category from storage.
      */
-    public function destroy(Request $request, Category $category)
+    public function destroy(Request $request, $categoryId)
     {
+        $category = Category::find($categoryId);
+        if (!$category)
+            return ApiResponse::notFound('category not found.');
+
         // Check if user is admin or editor
         if (!$request->user()->hasRole(['admin', 'editor'])) {
             return ApiResponse::forbidden('You are not authorized to delete categories.');
